@@ -1,19 +1,14 @@
 import { NextResponse } from "next/server";
-import { getDb } from "@/lib/mongodb";
+import clientPromise from "@/lib/mongodb";
 
 export async function GET() {
-  try {
-    const db = await getDb("visionCare");
-    const collections = await db.collections();
-    const collectionNames = collections.map(c => c.collectionName);
+  const client = await clientPromise;
+  const db = client.db("visionCare");
 
-    return NextResponse.json({
-      success: true,
-      databaseName: db.databaseName,
-      collections: collectionNames,
-    });
-  } catch (error: unknown) {
-    console.error(error);
-    return NextResponse.json({ success: false, error: "Server error" }, { status: 500 });
-  }
+  const collections = await db.collections();
+  return NextResponse.json({
+    databaseName: db.databaseName,
+    collections: collections.map(c => c.collectionName),
+    connectedUser: process.env.MONGODB_URI?.split(":")[1]?.replace("//",""),
+  });
 }
